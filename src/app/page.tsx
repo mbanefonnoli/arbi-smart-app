@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -13,7 +14,7 @@ import { getArbitrageOpportunities } from "./actions";
 import type { FindArbitrageOpportunitiesInput, FindArbitrageOpportunitiesOutput } from "@/ai/flows/arbitrage-finder-tool";
 
 interface ArbitrageFormState extends FindArbitrageOpportunitiesInput {
-  // empty for now, can extend if needed
+  // platform is already part of FindArbitrageOpportunitiesInput and optional
 }
 
 export default function Home() {
@@ -27,10 +28,15 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setArbitrageResult(null);
-    setCurrentInputs(data);
+    setCurrentInputs(data); // data already includes the optional platform
 
     try {
-      const result = await getArbitrageOpportunities(data);
+      // Ensure platform is handled correctly (it might be undefined if "Any Platform" was selected)
+      const submissionData: FindArbitrageOpportunitiesInput = {
+        ...data,
+        platform: data.platform ? data.platform : undefined,
+      };
+      const result = await getArbitrageOpportunities(submissionData);
       setArbitrageResult(result);
       toast({
         title: "Arbitrage Search Complete",
@@ -72,6 +78,7 @@ export default function Home() {
                 sourceCurrency={currentInputs.sourceCurrency}
                 targetCurrency={currentInputs.targetCurrency}
                 amount={currentInputs.amount}
+                platform={currentInputs.platform}
               />
             </div>
           )}

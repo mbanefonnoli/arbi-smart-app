@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,12 +24,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CURRENCIES, type Currency } from "@/lib/currencies";
 import type { FindArbitrageOpportunitiesInput } from "@/ai/flows/arbitrage-finder-tool";
-import { Loader2, SearchIcon } from "lucide-react";
+import { Loader2, SearchIcon, BuildingIcon } from "lucide-react";
 
 const formSchema = z.object({
   sourceCurrency: z.string().min(1, "Source currency is required."),
   targetCurrency: z.string().min(1, "Target currency is required."),
   amount: z.coerce.number().positive("Amount must be positive."),
+  platform: z.string().optional(),
 });
 
 type CurrencyInputFormValues = z.infer<typeof formSchema>;
@@ -38,6 +40,13 @@ interface CurrencyInputFormProps {
   loading: boolean;
 }
 
+const platformOptions = [
+  { value: "", label: "Any Platform" },
+  { value: "Wise", label: "Wise" },
+  { value: "Revolut", label: "Revolut" },
+  // Add more platforms here if needed
+];
+
 export function CurrencyInputForm({ onSubmit, loading }: CurrencyInputFormProps) {
   const form = useForm<CurrencyInputFormValues>({
     resolver: zodResolver(formSchema),
@@ -45,11 +54,16 @@ export function CurrencyInputForm({ onSubmit, loading }: CurrencyInputFormProps)
       sourceCurrency: "USD",
       targetCurrency: "EUR",
       amount: 100,
+      platform: "",
     },
   });
 
   const handleSubmit: SubmitHandler<CurrencyInputFormValues> = async (data) => {
-    await onSubmit(data);
+    const submissionData: FindArbitrageOpportunitiesInput = {
+      ...data,
+      platform: data.platform === "" ? undefined : data.platform, // Send undefined if "Any Platform"
+    };
+    await onSubmit(submissionData);
   };
 
   return (
@@ -119,6 +133,34 @@ export function CurrencyInputForm({ onSubmit, loading }: CurrencyInputFormProps)
                   <FormControl>
                     <Input type="number" placeholder="Enter amount" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="platform"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center">
+                    <BuildingIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    Preferred Platform (Optional)
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a platform" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {platformOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

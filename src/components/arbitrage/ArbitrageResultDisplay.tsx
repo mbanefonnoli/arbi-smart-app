@@ -1,19 +1,21 @@
+
 "use client";
 
 import * as React from "react";
 import type { FindArbitrageOpportunitiesOutput } from "@/ai/flows/arbitrage-finder-tool";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, TrendingDown, TrendingUp, Repeat } from "lucide-react";
+import { ArrowRight, TrendingDown, TrendingUp, Repeat, BuildingIcon } from "lucide-react";
 
 interface ArbitrageResultDisplayProps {
   result: FindArbitrageOpportunitiesOutput;
   sourceCurrency: string;
   targetCurrency: string;
   amount: number;
+  platform?: string; // Make platform optional
 }
 
-export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency, amount }: ArbitrageResultDisplayProps) {
+export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency, amount, platform }: ArbitrageResultDisplayProps) {
   const { arbitragePath, finalAmount, directConversionAmount, profit } = result;
 
   const formatCurrency = (value: number, currencyCode: string) => {
@@ -34,6 +36,11 @@ export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency,
         <CardTitle className="text-2xl font-headline text-center text-primary">Arbitrage Result</CardTitle>
         <CardDescription className="text-center">
           From {formatCurrency(amount, sourceCurrency)} to {targetCurrency}
+          {platform && platform !== "" && (
+            <span className="block text-sm mt-1">
+              Considering platform: <span className="font-semibold">{platform}</span>
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
