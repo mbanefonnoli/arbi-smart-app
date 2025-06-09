@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import type { FindArbitrageOpportunitiesOutput } from "@/ai/flows/arbitrage-finder-tool";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
