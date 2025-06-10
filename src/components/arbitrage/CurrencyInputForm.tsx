@@ -41,7 +41,7 @@ interface CurrencyInputFormProps {
 }
 
 const platformOptions = [
-  { value: "", label: "Any Platform" },
+  { value: "any_platform", label: "Any Platform" },
   { value: "Wise", label: "Wise" },
   { value: "Revolut", label: "Revolut" },
   // Add more platforms here if needed
@@ -54,14 +54,15 @@ export function CurrencyInputForm({ onSubmit, loading }: CurrencyInputFormProps)
       sourceCurrency: "USD",
       targetCurrency: "EUR",
       amount: 100,
-      platform: "",
+      platform: "any_platform", // Updated default value
     },
   });
 
   const handleSubmit: SubmitHandler<CurrencyInputFormValues> = async (data) => {
     const submissionData: FindArbitrageOpportunitiesInput = {
       ...data,
-      platform: data.platform === "" ? undefined : data.platform, // Send undefined if "Any Platform"
+      // Send undefined if "any_platform" was selected
+      platform: data.platform === "any_platform" ? undefined : data.platform, 
     };
     await onSubmit(submissionData);
   };
