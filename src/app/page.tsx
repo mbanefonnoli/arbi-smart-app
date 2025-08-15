@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CurrencyInputForm } from "@/components/arbitrage/CurrencyInputForm";
 import { ArbitrageResultDisplay } from "@/components/arbitrage/ArbitrageResultDisplay";
 import { RiskAssessmentDisplay } from "@/components/arbitrage/RiskAssessmentDisplay";
+import { DirectExchange } from "@/components/exchange/DirectExchange";
 import { HistoricalDataCharts } from "@/components/charts/HistoricalDataCharts";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -59,36 +60,45 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12 space-y-12">
-        <section id="arbitrage-tool" className="scroll-mt-20">
-          <h2 className="text-3xl md:text-4xl font-headline mb-8 text-center text-primary drop-shadow-sm">
-            Find Arbitrage Opportunities
-          </h2>
-          <CurrencyInputForm onSubmit={handleArbitrageSearch} loading={isLoading} />
-          
-          {error && (
-            <p className="text-destructive text-center mt-6 bg-destructive/10 p-3 rounded-md">
-              {error}
-            </p>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <section id="direct-exchange" className="scroll-mt-20">
+            <h2 className="text-3xl md:text-4xl font-headline mb-8 text-center text-primary drop-shadow-sm">
+              Direct Exchange
+            </h2>
+            <DirectExchange />
+          </section>
 
-          {arbitrageResult && currentInputs && (
-            <div className="mt-8">
-              <ArbitrageResultDisplay 
-                result={arbitrageResult} 
-                sourceCurrency={currentInputs.sourceCurrency}
-                targetCurrency={currentInputs.targetCurrency}
-                amount={currentInputs.amount}
-                platform={currentInputs.platform}
-              />
-            </div>
-          )}
-          
-          {arbitrageResult?.warnings && arbitrageResult.warnings.length > 0 && (
-            <div className="mt-8">
-              <RiskAssessmentDisplay warnings={arbitrageResult.warnings} />
-            </div>
-          )}
-        </section>
+          <section id="arbitrage-tool" className="scroll-mt-20">
+            <h2 className="text-3xl md:text-4xl font-headline mb-8 text-center text-primary drop-shadow-sm">
+              Find Arbitrage Opportunities
+            </h2>
+            <CurrencyInputForm onSubmit={handleArbitrageSearch} loading={isLoading} />
+            
+            {error && (
+              <p className="text-destructive text-center mt-6 bg-destructive/10 p-3 rounded-md">
+                {error}
+              </p>
+            )}
+
+            {arbitrageResult && currentInputs && (
+              <div className="mt-8">
+                <ArbitrageResultDisplay 
+                  result={arbitrageResult} 
+                  sourceCurrency={currentInputs.sourceCurrency}
+                  targetCurrency={currentInputs.targetCurrency}
+                  amount={currentInputs.amount}
+                  platform={currentInputs.platform}
+                />
+              </div>
+            )}
+            
+            {arbitrageResult?.warnings && arbitrageResult.warnings.length > 0 && (
+              <div className="mt-8">
+                <RiskAssessmentDisplay warnings={arbitrageResult.warnings} />
+              </div>
+            )}
+          </section>
+        </div>
 
         <Separator className="my-12 md:my-16" />
 
