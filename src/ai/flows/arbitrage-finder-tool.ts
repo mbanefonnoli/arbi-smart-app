@@ -16,6 +16,7 @@ const FindArbitrageOpportunitiesInputSchema = z.object({
   targetCurrency: z.string().describe('The target currency code (e.g., EUR).'),
   amount: z.number().describe('The amount to convert in the source currency.'),
   platform: z.string().optional().describe('The preferred financial platform to consider (e.g., Wise, Revolut). If "Any Platform" or no platform is specified, consider general market rates.'),
+  customPath: z.array(z.string()).optional().describe('A user-defined intermediary currency path (e.g., ["CAD", "JPY"]). The full path will be [source, ...customPath, target].'),
 });
 export type FindArbitrageOpportunitiesInput = z.infer<typeof FindArbitrageOpportunitiesInputSchema>;
 
@@ -23,7 +24,7 @@ const FindArbitrageOpportunitiesOutputSchema = z.object({
   arbitragePath: z
     .array(z.string())
     .describe(
-      'An array of currency codes representing the optimal conversion path for arbitrage (e.g., ["USD", "CAD", "EUR"]).'
+      'An array of currency codes representing the optimal or specified conversion path (e.g., ["USD", "CAD", "EUR"]).'
     ),
   finalAmount: z.number().describe('The final amount after arbitrage conversion in the target currency.'),
   directConversionAmount: z.number().describe('The amount if converted directly to the target currency.'),
@@ -41,33 +42,35 @@ const arbitragePrompt = ai.definePrompt({
   input: {schema: FindArbitrageOpportunitiesInputSchema},
   output: {schema: FindArbitrageOpportunitiesOutputSchema},
   prompt: `You are an expert financial analyst specializing in currency arbitrage.
-Given a source currency, target currency, an amount, and optionally a preferred financial platform, find the optimal arbitrage path using hypothetical real-time exchange rates.
+Given a source currency, target currency, an amount, and other optional parameters, analyze the conversion.
+You can invent plausible, realistic real-time exchange rates to perform the calculation.
 
 Input:
 - Source Currency: {{{sourceCurrency}}}
 - Target Currency: {{{targetCurrency}}}
 - Amount: {{{amount}}}
 {{#if platform}}- Preferred Platform: {{{platform}}}{{/if}}
+{{#if customPath}}- User-Defined Path: {{{sourceCurrency}}} -> {{#each customPath}}{{{this}}} -> {{/each}}{{{targetCurrency}}}{{/if}}
 
-Output the following in JSON format adhering to the defined schema:
-- arbitragePath: An array of currency codes representing the optimal conversion path (e.g., ["{{{sourceCurrency}}}", "XYZ", "{{{targetCurrency}}}"]). This path might involve one or more intermediate currencies if it offers a better rate than direct conversion.
-- finalAmount: The final amount in {{{targetCurrency}}} after executing all conversions in the arbitragePath.
-- directConversionAmount: The amount in {{{targetCurrency}}} if {{{amount}}} {{{sourceCurrency}}} is converted directly to {{{targetCurrency}}}.
+Your task is to:
+{{#if customPath}}
+1.  **Calculate the outcome of the user-defined path**. The full path to use is [{{{sourceCurrency}}}, {{#each customPath}}"{{{this}}}", {{/each}}"{{{targetCurrency}}}"].
+2.  Simulate the conversion through each currency in the specified order.
+3.  Set 'arbitragePath' in the output to the exact user-defined path you evaluated.
+{{else}}
+1.  **Find the optimal arbitrage path**. This might involve one or more intermediate currencies if it offers a better rate than direct conversion.
+2.  Set 'arbitragePath' in the output to the optimal path you discover (e.g., ["{{{sourceCurrency}}}", "XYZ", "{{{targetCurrency}}}"]).
+{{/if}}
+
+For both cases, output the following in JSON format adhering to the defined schema:
+- arbitragePath: The conversion path used for the calculation.
+- finalAmount: The final amount in {{{targetCurrency}}} after executing all conversions in the path.
+- directConversionAmount: The amount in {{{targetCurrency}}} if {{{amount}}} {{{sourceCurrency}}} was converted directly.
 - profit: The difference (finalAmount - directConversionAmount) in {{{targetCurrency}}}.
-- warnings: An optional array of strings detailing any potential risks, high fees, or volatility associated with the identified path or currencies. If no specific warnings, this field can be omitted or an empty array should be provided.
+- warnings: An optional array of strings detailing any potential risks (e.g., high fees, volatility, liquidity issues) associated with the path. If none, omit or provide an empty array.
 
-Analyze the potential for arbitrage. For this simulation, you can invent plausible exchange rates if necessary to demonstrate an arbitrage opportunity or lack thereof.
-If a platform is specified (e.g., Wise, Revolut), consider that it might offer slightly different rates or have specific fees, and you can reflect this in your simulated outcome or warnings. If "Any Platform" or no platform is specified, assume general market conditions.
-
-For example, if direct USD to EUR is 100 USD = 90 EUR.
-An arbitrage path like USD -> GBP -> EUR might yield 100 USD = 92 EUR.
-In this case, profit would be 2 EUR.
-The arbitragePath would be ["USD", "GBP", "EUR"].
-finalAmount would be 92.
-directConversionAmount would be 90.
-
-Please provide a realistic-sounding scenario. Ensure amounts are numeric.
-If no profitable arbitrage opportunity is found, the profit can be zero or negative, and the arbitragePath can be the same as the direct path (e.g., ["{{{sourceCurrency}}}", "{{{targetCurrency}}}"]).
+If no profitable arbitrage opportunity is found, the profit can be zero or negative.
+Ensure amounts are numeric and the scenario is realistic.
 `,
 });
 

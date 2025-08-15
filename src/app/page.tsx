@@ -13,9 +13,12 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { getArbitrageOpportunities } from "./actions";
 import type { FindArbitrageOpportunitiesInput, FindArbitrageOpportunitiesOutput } from "@/ai/flows/arbitrage-finder-tool";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CustomPathBuilder } from "@/components/arbitrage/CustomPathBuilder";
+import { Bot, Wrench } from "lucide-react";
 
 interface ArbitrageFormState extends FindArbitrageOpportunitiesInput {
-  // platform is already part of FindArbitrageOpportunitiesInput and optional
+  // extends to include all fields
 }
 
 export default function Home() {
@@ -25,22 +28,28 @@ export default function Home() {
   const [currentInputs, setCurrentInputs] = useState<ArbitrageFormState | null>(null);
   const { toast } = useToast();
 
-  const handleArbitrageSearch = async (data: FindArbitrageOpportunitiesInput) => {
+  // State for custom path builder
+  const [activeTab, setActiveTab] = useState("ai-optimized");
+  const [customPath, setCustomPath] = useState<string[]>([]);
+
+  const handleArbitrageSearch = async (data: Omit<FindArbitrageOpportunitiesInput, 'customPath'>) => {
     setIsLoading(true);
     setError(null);
     setArbitrageResult(null);
-    setCurrentInputs(data); // data already includes the optional platform
+
+    const submissionData: FindArbitrageOpportunitiesInput = {
+      ...data,
+      platform: data.platform ? data.platform : undefined,
+      // Add customPath only if the custom path tab is active and path is not empty
+      customPath: activeTab === "custom-path" && customPath.length > 0 ? customPath : undefined,
+    };
+    setCurrentInputs(submissionData);
 
     try {
-      // Ensure platform is handled correctly (it might be undefined if "Any Platform" was selected)
-      const submissionData: FindArbitrageOpportunitiesInput = {
-        ...data,
-        platform: data.platform ? data.platform : undefined,
-      };
       const result = await getArbitrageOpportunities(submissionData);
       setArbitrageResult(result);
       toast({
-        title: "Arbitrage Search Complete",
+        title: "Analysis Complete",
         description: "Results are now displayed.",
       });
     } catch (err) {
@@ -70,9 +79,36 @@ export default function Home() {
 
           <section id="arbitrage-tool" className="scroll-mt-20">
             <h2 className="text-3xl md:text-4xl font-headline mb-8 text-center text-primary drop-shadow-sm">
-              Find Arbitrage Opportunities
+              Arbitrage Toolkit
             </h2>
-            <CurrencyInputForm onSubmit={handleArbitrageSearch} loading={isLoading} />
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-lg mx-auto">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="ai-optimized">
+                  <Bot className="mr-2 h-4 w-4" /> AI Optimized
+                </TabsTrigger>
+                <TabsTrigger value="custom-path">
+                  <Wrench className="mr-2 h-4 w-4" /> Custom Path
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="ai-optimized">
+                 <CurrencyInputForm onSubmit={handleArbitrageSearch} loading={isLoading} mode="ai-optimized" />
+              </TabsContent>
+              <TabsContent value="custom-path">
+                <CurrencyInputForm onSubmit={handleArbitrageSearch} loading={isLoading} mode="custom-path">
+                    {(form) => (
+                        <div className="mt-6">
+                            <CustomPathBuilder 
+                                path={customPath}
+                                setPath={setCustomPath}
+                                sourceCurrency={form.watch('sourceCurrency')}
+                                targetCurrency={form.watch('targetCurrency')}
+                            />
+                        </div>
+                    )}
+                </CurrencyInputForm>
+              </TabsContent>
+            </Tabs>
             
             {error && (
               <p className="text-destructive text-center mt-6 bg-destructive/10 p-3 rounded-md">
@@ -88,6 +124,7 @@ export default function Home() {
                   targetCurrency={currentInputs.targetCurrency}
                   amount={currentInputs.amount}
                   platform={currentInputs.platform}
+                  isCustomPath={!!currentInputs.customPath && currentInputs.customPath.length > 0}
                 />
               </div>
             )}

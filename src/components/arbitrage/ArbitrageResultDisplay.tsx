@@ -5,17 +5,18 @@ import * as React from "react";
 import type { FindArbitrageOpportunitiesOutput } from "@/ai/flows/arbitrage-finder-tool";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, TrendingDown, TrendingUp, Repeat, BuildingIcon } from "lucide-react";
+import { ArrowRight, TrendingDown, TrendingUp, Repeat, Bot, Wrench } from "lucide-react";
 
 interface ArbitrageResultDisplayProps {
   result: FindArbitrageOpportunitiesOutput;
   sourceCurrency: string;
   targetCurrency: string;
   amount: number;
-  platform?: string; // Make platform optional
+  platform?: string;
+  isCustomPath?: boolean;
 }
 
-export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency, amount, platform }: ArbitrageResultDisplayProps) {
+export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency, amount, platform, isCustomPath = false }: ArbitrageResultDisplayProps) {
   const { arbitragePath, finalAmount, directConversionAmount, profit } = result;
 
   const formatCurrency = (value: number, currencyCode: string) => {
@@ -33,7 +34,7 @@ export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency,
   return (
     <Card className="shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center text-primary">Arbitrage Result</CardTitle>
+        <CardTitle className="text-2xl font-headline text-center text-primary">Analysis Result</CardTitle>
         <CardDescription className="text-center">
           From {formatCurrency(amount, sourceCurrency)} to {targetCurrency}
           {platform && platform !== "" && (
@@ -45,9 +46,12 @@ export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency,
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-2 font-headline flex items-center">
-            <Repeat className="mr-2 h-5 w-5 text-primary" />
-            Optimal Conversion Path
+           <h3 className="text-lg font-semibold mb-2 font-headline flex items-center">
+            {isCustomPath ? (
+              <><Wrench className="mr-2 h-5 w-5 text-primary" /> Custom Conversion Path</>
+            ) : (
+              <><Bot className="mr-2 h-5 w-5 text-primary" /> AI-Optimized Conversion Path</>
+            )}
           </h3>
           <div className="flex flex-wrap items-center gap-2 bg-secondary p-3 rounded-md">
             {arbitragePath.map((currency, index) => (
@@ -75,7 +79,7 @@ export function ArbitrageResultDisplay({ result, sourceCurrency, targetCurrency,
 
           <Card className="bg-primary/10 border-primary">
             <CardHeader>
-              <CardTitle className="text-xl font-headline text-primary">Arbitrage Conversion</CardTitle>
+              <CardTitle className="text-xl font-headline text-primary">Path Conversion</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-medium text-primary">
