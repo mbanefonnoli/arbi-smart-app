@@ -67,8 +67,16 @@ export async function fetchLeg(
         amountReceived: result.value.amountReceived,
       };
     }
+    const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
     console.error(`[arbitrage] ${p.id} unavailable for ${from}->${to}:`, result.reason);
-    return { provider: p.id, label: p.label, status: 'unavailable' as const, rate: null, amountReceived: null };
+    return {
+      provider: p.id,
+      label: p.label,
+      status: 'unavailable' as const,
+      rate: null,
+      amountReceived: null,
+      reason,
+    };
   });
 
   let best: BestQuote | null = null;
